@@ -1,0 +1,54 @@
+<div class="mydp" [ngStyle]="{'width': width, 'border': inline ? 'none' : '1px solid #AAA'}">
+	<div class="selectiongroup" *ngIf="!inline">
+		<input type="text" class="selection" maxlength="10" [ngClass]="{'invaliddate': invalidDate&&indicateInvalidDate}" placeholder="{{showDateFormatPlaceholder?dateFormat:''}}"
+			[ngStyle]="{'height': height, 'line-height': height, 'font-size': selectionTxtFontSize, 'border': 'none', 'padding-right': selectionDayTxt.length>0 ? '60px' : '30px'}"
+			(keyup)="userDateInput($event)" [value]="selectionDayTxt">
+		<span class="selbtngroup" [style.height]="height">
+            <button type="button" class="btnclear" *ngIf="selectionDayTxt.length>0" (click)="removeBtnClicked()">
+                <span class="icon icon-cross" [ngStyle]="{'line-height': height}"></span>
+		</button>
+		<button type="button" class="btnpicker" (click)="openBtnClicked()">
+                <span class="icon icon-calendar" [ngStyle]="{'line-height': height}"></span>
+            </button>
+		</span>
+	</div>
+	<div class="selector" *ngIf="showSelector||inline" [ngClass]="{'inlinedp': inline, 'alignselectorright': alignSelectorRight}">
+		<table class="header">
+			<tr>
+				<td>
+					<div class="header-cointainer">
+						<div class="headerbtn" (click)="prevMonth()">
+							<span class="previous"></span>
+						</div>
+						<div class="headermonthtxt">
+							<input type="text" *ngIf="editMonth" class="monthinput" maxlength="4" [inputFocus] [value]="visibleMonth.monthTxt" (keyup)="userMonthInput($event)"
+								(click)="$event.stopPropagation()" [ngClass]="{'invalidmonth': invalidMonth}">
+							<span [ngClass]="{'monthlabel': editableMonthAndYear}" *ngIf="!editMonth" (click)="editMonthClicked($event)">{{visibleMonth.monthTxt}} {{visibleMonth.year}}</span>
+						</div>
+						<div class="headerbtn" (click)="nextMonth()">
+							<span class="next"></span>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+		<table class="caltable">
+			<thead>
+				<tr>
+					<th *ngFor="let d of weekDays">{{d}}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr *ngFor="let w of dates" [class.selectedWeek]="selectedWeek.weekNumber === w.weekNumber">
+					<td *ngFor="let d of w.days" [ngClass]="{'currmonth':d.cmo===CURR_MONTH&&!d.disabled, 'currday':d.currDay, 'selectedday':selectedDate.day===d.dateObj.day && selectedDate.month===d.dateObj.month && selectedDate.year===d.dateObj.year && d.cmo===CURR_MONTH, 'disabled': d.disabled, 'tablesingleday': d.cmo===CURR_MONTH&&!d.disabled}"
+						(click)="cellClicked(d);$event.stopPropagation()">
+						<div [ngClass]="{'prevmonth':d.cmo===PREV_MONTH,'currmonth':d.cmo===CURR_MONTH,'nextmonth':d.cmo===NEXT_MONTH,'sunday':d.dayNbr === 0 && sunHighlight}">
+							<span class="caption" [ngClass]="{'sundayDim': sunHighlight && d.dayNbr === 0 && (d.cmo===PREV_MONTH || d.cmo===NEXT_MONTH || d.disabled)}">{{d.dateObj.day}}</span>
+							<div class="has-events" *ngIf="events[formatDate(d.dateObj)]"></div>
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
