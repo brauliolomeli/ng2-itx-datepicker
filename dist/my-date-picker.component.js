@@ -18,10 +18,7 @@ var MyDatePicker = (function () {
         this.renderer = renderer;
         this.localeService = localeService;
         this.validatorService = validatorService;
-        this.events = [
-            '2016-11-15',
-            '2016-11-25'
-        ];
+        this.events = [];
         this.dateChanged = new core_1.EventEmitter();
         this.showSelector = false;
         this.visibleMonth = { monthTxt: '', monthNbr: 0, year: 0 };
