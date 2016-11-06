@@ -1,25 +1,23 @@
-# mydatepicker
+# ng2-itx-datepicker
 
-**Angular 2 date picker - Angular2 reusable UI component**
+**Angular 2 date picker - Angular2 reusable UI component based on [mydatepicker](https://github.com/kekeh/mydatepicker)**
 
-[![Build Status](https://travis-ci.org/kekeh/mydatepicker.svg?branch=master)](https://travis-ci.org/kekeh/mydatepicker)
-[![codecov](https://codecov.io/gh/kekeh/mydatepicker/branch/master/graph/badge.svg)](https://codecov.io/gh/kekeh/mydatepicker)
-[![npm](https://img.shields.io/npm/v/mydatepicker.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/mydatepicker)
+[![npm](https://img.shields.io/npm/v/mydatepicker.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/ng2-itx-datepicker)
 
 ## Description
-Simple Angular2 date picker. Online demo is [here](http://kekeh.github.io/mydatepicker)
+Simple Angular2 date picker. Online demo is [here](http://brauliolomeli.github.io/ng2-itx-datepicker)
 
 ## Installation
 
 To install this component to an external project, follow the procedure:
 
-1. __npm install mydatepicker --save__
+1. __npm install ng2-itx-datepicker --save__
 2. Add __MyDatePickerModule__ import to your __@NgModule__ like example below
     ```js
     import { NgModule } from '@angular/core';
     import { BrowserModule } from '@angular/platform-browser';
     import { MyTestApp } from './my-test-app';
-    import { MyDatePickerModule } from 'mydatepicker';
+    import { MyDatePickerModule } from 'ng2-itx-datepicker';
 
     @NgModule({
         imports:      [ BrowserModule, MyDatePickerModule ],
@@ -126,7 +124,7 @@ the options listed above. Currently supported languages: __en__, __fr__, __ja__,
 If the __locale__ attribute is used it overrides dayLabels, monthLabels, dateFormat, todayBtnTxt,
 firstDayOfWeek and sunHighlight properties from the options.
 
-* new locale data can be added to [this](https://github.com/kekeh/mydatepicker/blob/master/src/my-date-picker/services/my-date-picker.locale.service.ts) file.
+* new locale data can be added to [this](https://github.com/brauliolomeli/ng2-itx-datepicker/blob/master/src/my-date-picker/services/my-date-picker.locale.service.ts) file.
 
 ### selDate attribute
 
@@ -162,7 +160,7 @@ Execute unit tests and coverage (output is generated to the __test-output__ fold
 * __npm test__
 
 ## Demo
-Online demo is [here](http://kekeh.github.io/mydatepicker)
+Online demo is [here](http://brauliolomeli.github.io/ng2-itx-datepicker)
 
 ## Compatibility (tested with)
 * Firefox (latest)
@@ -174,4 +172,7 @@ Online demo is [here](http://kekeh.github.io/mydatepicker)
 * License: MIT
 
 ## Author
-* Author: kekeh
+* Author: brauliolomeli
+
+## Credits
+* [kekeh](https://github.com/kekeh)
