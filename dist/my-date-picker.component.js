@@ -18,6 +18,10 @@ var MyDatePicker = (function () {
         this.renderer = renderer;
         this.localeService = localeService;
         this.validatorService = validatorService;
+        this.events = {
+            '2016-11-15': [],
+            '2016-11-25': []
+        };
         this.dateChanged = new core_1.EventEmitter();
         this.showSelector = false;
         this.visibleMonth = { monthTxt: '', monthNbr: 0, year: 0 };
@@ -180,6 +184,7 @@ var MyDatePicker = (function () {
         if (changes.hasOwnProperty('selDate')) {
             this.selectionDayTxt = changes['selDate'].currentValue;
             this.selectedDate = this.parseSelectedDate(this.selectionDayTxt);
+            this.selectedWeek = this.getWeekNumber(this.selectedDate);
         }
         if (changes.hasOwnProperty('defaultMonth')) {
             this.selectedMonth = this.parseSelectedMonth((changes['defaultMonth'].currentValue).toString());
@@ -196,7 +201,14 @@ var MyDatePicker = (function () {
     MyDatePicker.prototype.removeBtnClicked = function () {
         this.selectionDayTxt = '';
         this.selectedDate = { year: 0, month: 0, day: 0 };
-        this.dateChanged.emit({ date: {}, formatted: this.selectionDayTxt, epoc: 0 });
+        this.selectedWeek = this.getWeekNumber(this.selectedDate);
+        this.dateChanged.emit({
+            date: {},
+            formatted: this.selectionDayTxt,
+            epoc: 0,
+            start: new Date(),
+            end: new Date()
+        });
         this.invalidDate = false;
     };
     MyDatePicker.prototype.openBtnClicked = function () {
@@ -275,18 +287,25 @@ var MyDatePicker = (function () {
             this.prevMonth();
         }
         else if (cell.cmo === this.CURR_MONTH) {
-            this.selectDate(cell.dateObj);
         }
         else if (cell.cmo === this.NEXT_MONTH) {
             this.nextMonth();
         }
+        this.selectDate(cell.dateObj);
         this.resetMonthYearEdit();
     };
     MyDatePicker.prototype.selectDate = function (date) {
         this.selectedDate = { day: date.day, month: date.month, year: date.year };
+        this.selectedWeek = this.getWeekNumber(this.selectedDate);
         this.selectionDayTxt = this.formatDate(this.selectedDate);
         this.showSelector = false;
-        this.dateChanged.emit({ date: this.selectedDate, formatted: this.selectionDayTxt, epoc: Math.round(this.getTimeInMilliseconds(this.selectedDate) / 1000.0) });
+        this.dateChanged.emit({
+            date: this.selectedDate,
+            formatted: this.selectionDayTxt,
+            epoc: Math.round(this.getTimeInMilliseconds(this.selectedDate) / 1000.0),
+            start: this.selectedWeek.start,
+            end: this.selectedWeek.end
+        });
         this.invalidDate = false;
     };
     MyDatePicker.prototype.preZero = function (val) {
@@ -358,18 +377,20 @@ var MyDatePicker = (function () {
         var dayNbr = 1;
         var cmo = this.PREV_MONTH;
         for (var i = 1; i < 7; i++) {
-            var week = [];
+            var days = [];
             if (i === 1) {
                 var pm = dInPrevM - monthStart + 1;
                 for (var j = pm; j <= dInPrevM; j++) {
                     var date = { year: y, month: m - 1, day: j };
-                    week.push({ dateObj: date, cmo: cmo, currDay: this.isCurrDay(j, m, y, cmo), dayNbr: this.getDayNumber(date), disabled: this.isDisabledDay(date) });
+                    var currDay = this.isCurrDay(j, m, y, cmo);
+                    days.push({ dateObj: date, cmo: cmo, currDay: currDay, dayNbr: this.getDayNumber(date), disabled: this.isDisabledDay(date) });
                 }
                 cmo = this.CURR_MONTH;
-                var daysLeft = 7 - week.length;
+                var daysLeft = 7 - days.length;
                 for (var j = 0; j < daysLeft; j++) {
                     var date = { year: y, month: m, day: dayNbr };
-                    week.push({ dateObj: date, cmo: cmo, currDay: this.isCurrDay(dayNbr, m, y, cmo), dayNbr: this.getDayNumber(date), disabled: this.isDisabledDay(date) });
+                    var currDay = this.isCurrDay(dayNbr, m, y, cmo);
+                    days.push({ dateObj: date, cmo: cmo, currDay: currDay, dayNbr: this.getDayNumber(date), disabled: this.isDisabledDay(date) });
                     dayNbr++;
                 }
             }
@@ -380,11 +401,18 @@ var MyDatePicker = (function () {
                         cmo = this.NEXT_MONTH;
                     }
                     var date = { year: y, month: cmo === this.CURR_MONTH ? m : m + 1, day: dayNbr };
-                    week.push({ dateObj: date, cmo: cmo, currDay: this.isCurrDay(dayNbr, m, y, cmo), dayNbr: this.getDayNumber(date), disabled: this.isDisabledDay(date) });
+                    var currDay = this.isCurrDay(dayNbr, m, y, cmo);
+                    days.push({ dateObj: date, cmo: cmo, currDay: currDay, dayNbr: this.getDayNumber(date), disabled: this.isDisabledDay(date) });
                     dayNbr++;
                 }
             }
-            this.dates.push(week);
+            var week = {
+                days: days,
+                weekNumber: this.getWeekNumber(days[5].dateObj).weekNumber
+            };
+            if (days[0].cmo < 3) {
+                this.dates.push(week);
+            }
         }
     };
     MyDatePicker.prototype.parseSelectedDate = function (ds) {
@@ -412,6 +440,15 @@ var MyDatePicker = (function () {
             { monthTxt: '', monthNbr: parseInt(split[1]), year: parseInt(split[0]) } :
             { monthTxt: '', monthNbr: parseInt(split[0]), year: parseInt(split[1]) };
     };
+    MyDatePicker.prototype.getWeekNumber = function (myDate) {
+        var onejan = new Date(myDate.year, 0, 1), tDate = new Date(myDate.year, myDate.month - 1, myDate.day), dow = tDate.getDay();
+        return {
+            days: [],
+            weekNumber: (myDate.year * 100) + Math.ceil((((tDate - onejan) / 86400000) + onejan.getDay() + 1) / 7),
+            start: new Date(myDate.year, myDate.month - 1, myDate.day - dow),
+            end: new Date(myDate.year, myDate.month - 1, myDate.day - dow + 6)
+        };
+    };
     __decorate([
         core_1.Input(), 
         __metadata('design:type', Object)
@@ -429,14 +466,18 @@ var MyDatePicker = (function () {
         __metadata('design:type', String)
     ], MyDatePicker.prototype, "selDate", void 0);
     __decorate([
+        core_1.Input(), 
+        __metadata('design:type', Object)
+    ], MyDatePicker.prototype, "events", void 0);
+    __decorate([
         core_1.Output(), 
         __metadata('design:type', core_1.EventEmitter)
     ], MyDatePicker.prototype, "dateChanged", void 0);
     MyDatePicker = __decorate([
         core_1.Component({
             selector: 'my-date-picker',
-            styles: [".mydp{min-width:100px;border-radius:2px;line-height:1.1;display:inline-block;position:relative}.mydp *{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;padding:0;margin:0}.mydp .selector{margin-top:2px;margin-left:-1px;position:absolute;width:262px;padding:3px;border-radius:2px;background-color:#DDD;z-index:100}.mydp .alignselectorright{right:-1px}.mydp .selectiongroup{position:relative;display:table;border:none;background-color:#FFF}.mydp .selection{background-color:#FFF;display:table-cell;position:absolute;width:100%;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}.mydp .invaliddate,.mydp .invalidmonth,.mydp .invalidyear{background-color:#F1DEDE}.mydp ::-ms-clear{display:none}.mydp .headerbtn,.mydp .selbtngroup{display:table-cell;vertical-align:middle}.mydp .selbtngroup{position:relative;white-space:nowrap;width:1%;text-align:right;font-size:0}.mydp .btnclear,.mydp .btnpicker{height:100%;width:30px;border:none;border-left:1px solid #AAA;padding:0;cursor:pointer;outline:0;font:inherit;-moz-user-select:none}.mydp .btnclear,.mydp .btnpicker,.mydp .headertodaybtn{background:#FFF}.mydp .header{width:100%;height:36px;margin-bottom:1px;background-color:#FAFAFA}.mydp .header td{vertical-align:middle;border:none}.mydp .currday div,.mydp .selectedday div{border:1px solid #004198}.mydp .header td:nth-child(1){font-size:16px;padding-left:4px}.mydp .header td:nth-child(2){text-align:center}.mydp .header td:nth-child(3){font-size:16px;padding-right:4px}.mydp .caltable{table-layout:fixed;width:100%;background-color:#FFF;font-size:14px}.mydp .caltable,.mydp .caltable td,.mydp .caltable th{border-collapse:collapse;color:#036;line-height:1.1}.mydp .caltable td,.mydp .caltable th{padding:5px;text-align:center}.mydp .caltable th{background-color:#DDD;font-size:12px;vertical-align:middle}.mydp .caltable td{cursor:pointer;font-weight:700;height:28px}.mydp .caltable td div{background-color:inherit;height:18px;vertical-align:middle}.mydp .caltable td div span{vertical-align:middle}.mydp .inlinedp{position:relative}.mydp .nextmonth,.mydp .prevmonth{color:#CCC}.mydp .disabled{cursor:default!important;color:#CCC!important;background:#FFEBE6!important}.mydp .sunday{color:#C30000}.mydp .sundayDim{opacity:.5}.mydp .currmonth{background-color:#F6F6F6;font-weight:700}.mydp .selectedday div{background-color:#8EBFFF!important;border-radius:0}.mydp .selectmenu{height:24px;width:60px}.mydp .headerbtn{background-color:#FAFAFA;cursor:pointer}.mydp,.mydp .caltable tbody,.mydp .header,.mydp .headertodaybtn,.mydp .monthinput,.mydp .selector,.mydp .yearinput{border:1px solid #AAA}.mydp .btnclear,.mydp .btnpicker,.mydp .headerbtn,.mydp .headermonthtxt,.mydp .headertodaybtn,.mydp .headeryeartxt,.mydp .selection{color:#000}.mydp .headertodaybtn{padding:0 4px;border-radius:2px;cursor:pointer;font-size:11px;min-width:60px;height:22px}.mydp button::-moz-focus-inner{border:0}.mydp .headermonthtxt,.mydp .headeryeartxt{min-width:40px;text-align:center;display:table-cell;vertical-align:middle;font-size:14px}.mydp .headermonthtxt span,.mydp .headeryeartxt span{vertical-align:middle}.mydp .btnclear:focus,.mydp .btnpicker:focus{background:#ADD8E6}.mydp .icon-calendar,.mydp .icon-cross{font-size:16px}.mydp .icon-left,.mydp .icon-right{color:#222;font-size:16px;vertical-align:middle}.mydp table{display:table}.mydp table td{padding:0}.mydp .btnclear:hover,.mydp .btnpicker:hover,.mydp .headertodaybtn:hover,.mydp .tablesingleday:hover{background-color:#8BDAF4}.mydp .monthlabel,.mydp .yearlabel{cursor:pointer}.mydp .monthinput,.mydp .yearinput{width:40px;height:22px;text-align:center;font-weight:700;outline:0;border-radius:2px}.mydp .headerbtn span:hover{color:#8BDAF4}.mydp .monthlabel:hover,.mydp .yearlabel:hover{color:#8BDAF4;font-weight:700}@font-face{font-family:mydatepicker;src:url(data:application/x-font-ttf;charset=utf-8;base64,AAEAAAALAIAAAwAwT1MvMg8SAssAAAC8AAAAYGNtYXDMUczTAAABHAAAAGxnYXNwAAAAEAAAAYgAAAAIZ2x5ZmFQ1q4AAAGQAAABbGhlYWQGZuTFAAAC/AAAADZoaGVhB4IDyQAAAzQAAAAkaG10eBYAAnAAAANYAAAAIGxvY2EBdAE0AAADeAAAABJtYXhwABUAPgAAA4wAAAAgbmFtZQ5R9RkAAAOsAAABnnBvc3QAAwAAAAAFTAAAACAAAwOaAZAABQAAApkCzAAAAI8CmQLMAAAB6wAzAQkAAAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAAAAAAAABAAADmBwPA/8AAQAPAAEAAAAABAAAAAAAAAAAAAAAgAAAAAAADAAAAAwAAABwAAQADAAAAHAADAAEAAAAcAAQAUAAAABAAEAADAAAAAQAg5gDmAuYF5gf//f//AAAAAAAg5gDmAuYF5gf//f//AAH/4xoEGgMaARoAAAMAAQAAAAAAAAAAAAAAAAAAAAAAAQAB//8ADwABAAAAAAAAAAAAAgAANzkBAAAAAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAAMAEAAAAPAA4AABAAJAA4AEwAYAB0AIgAnACwAMQA2ADsAABMRMxEjFyE1IRUDITUhFQERMxEjJRUzNSMTFTM1IzMVMzUjMxUzNSMBFTM1IzMVMzUjMxUzNSMTFTM1I0Bzc0ADAP0AQAOA/IADDXNz/ZOAgCCAgMCAgMCAgP6AgIDAgIDAgIAggIADAP1AAsBzc3P9c3NzAwD9QALAgMDA/sCAgICAgID/AICAgICAgAJAwMAAAAAAAgBwADADkANQAAQACQAANwEnARcDATcBB+kCp3n9WXl5Aqd5/Vl5MAKnef1ZeQKn/Vl5Aqd5AAABAOAAAAMgA4AAAwAAAQMBJQMgA/3DASADgPyAAcPfAAEA4AAAAyADgAADAAA3EwEF4AMCPf7gAAOA/j3fAAAAAQAAAAEAAF0/BsNfDzz1AAsEAAAAAADRxFAkAAAAANHEUCQAAAAAA8ADgAAAAAgAAgAAAAAAAAABAAADwP/AAAAEAAAAAAADwAABAAAAAAAAAAAAAAAAAAAACAQAAAAAAAAAAAAAAAIAAAAEAABABAAAcAQAAOAEAADgAAAAAAAKABQAHgB6AJYApgC2AAAAAQAAAAgAPAAMAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAA4ArgABAAAAAAABAAkAAAABAAAAAAACAAcAcgABAAAAAAADAAkAPAABAAAAAAAEAAkAhwABAAAAAAAFAAsAGwABAAAAAAAGAAkAVwABAAAAAAAKABoAogADAAEECQABABIACQADAAEECQACAA4AeQADAAEECQADABIARQADAAEECQAEABIAkAADAAEECQAFABYAJgADAAEECQAGABIAYAADAAEECQAKADQAvHZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAclZlcnNpb24gMS4wAFYAZQByAHMAaQBvAG4AIAAxAC4AMHZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAcnZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAclJlZ3VsYXIAUgBlAGcAdQBsAGEAcnZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAckZvbnQgZ2VuZXJhdGVkIGJ5IEljb01vb24uAEYAbwBuAHQAIABnAGUAbgBlAHIAYQB0AGUAZAAgAGIAeQAgAEkAYwBvAE0AbwBvAG4ALgAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=) format('truetype');font-weight:400;font-style:normal}.mydp .icon{font-family:mydatepicker;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.mydp .icon-calendar:before{content:\"\\e600\"}.mydp .icon-cross:before{content:\"\\e602\"}.mydp .icon-left:before{content:\"\\e605\"}.mydp .icon-right:before{content:\"\\e607\"}"],
-            template: "<div class=\"mydp\" [ngStyle]=\"{'height': height, 'width': width, 'border': inline ? 'none' : '1px solid #AAA'}\"><div class=\"selectiongroup\" *ngIf=\"!inline\"><input type=\"text\" class=\"selection\" maxlength=\"10\" [ngClass]=\"{'invaliddate': invalidDate&&indicateInvalidDate}\" placeholder=\"{{showDateFormatPlaceholder?dateFormat:''}}\" [ngStyle]=\"{'height': height, 'line-height': height, 'font-size': selectionTxtFontSize, 'border': 'none', 'padding-right': selectionDayTxt.length>0 ? '60px' : '30px'}\" (keyup)=\"userDateInput($event)\" [value]=\"selectionDayTxt\"> <span class=\"selbtngroup\" [style.height]=\"height\"><button type=\"button\" class=\"btnclear\" *ngIf=\"selectionDayTxt.length>0\" (click)=\"removeBtnClicked()\"><span class=\"icon icon-cross\" [ngStyle]=\"{'line-height': height}\"></span></button> <button type=\"button\" class=\"btnpicker\" (click)=\"openBtnClicked()\"><span class=\"icon icon-calendar\" [ngStyle]=\"{'line-height': height}\"></span></button></span></div><div class=\"selector\" *ngIf=\"showSelector||inline\" [ngClass]=\"{'inlinedp': inline, 'alignselectorright': alignSelectorRight}\"><table class=\"header\"><tr><td><div style=\"float:left\"><div class=\"headerbtn\" (click)=\"prevMonth()\"><span class=\"icon icon-left\"></span></div><div class=\"headermonthtxt\"><input type=\"text\" *ngIf=\"editMonth\" class=\"monthinput\" maxlength=\"4\" [inputFocus] [value]=\"visibleMonth.monthTxt\" (keyup)=\"userMonthInput($event)\" (click)=\"$event.stopPropagation()\" [ngClass]=\"{'invalidmonth': invalidMonth}\"> <span [ngClass]=\"{'monthlabel': editableMonthAndYear}\" *ngIf=\"!editMonth\" (click)=\"editMonthClicked($event)\">{{visibleMonth.monthTxt}}</span></div><div class=\"headerbtn\" (click)=\"nextMonth()\"><span class=\"icon icon-right\"></span></div></div></td><td><button type=\"button\" class=\"headertodaybtn\" (click)=\"todayClicked()\">{{todayBtnTxt}}</button></td><td><div style=\"float:right\"><div class=\"headerbtn\" (click)=\"prevYear()\"><span class=\"icon icon-left\"></span></div><div class=\"headeryeartxt\"><input type=\"text\" *ngIf=\"editYear\" class=\"yearinput\" maxlength=\"4\" [inputFocus] [value]=\"visibleMonth.year\" (keyup)=\"userYearInput($event)\" (click)=\"$event.stopPropagation()\" [ngClass]=\"{'invalidyear': invalidYear}\"> <span [ngClass]=\"{'yearlabel': editableMonthAndYear}\" *ngIf=\"!editYear\" (click)=\"editYearClicked($event)\">{{visibleMonth.year}}</span></div><div class=\"headerbtn\" (click)=\"nextYear()\"><span class=\"icon icon-right\"></span></div></div></td></tr></table><table class=\"caltable\"><thead><tr><th *ngFor=\"let d of weekDays\">{{d}}</th></tr></thead><tbody><tr *ngFor=\"let w of dates\"><td *ngFor=\"let d of w\" [ngClass]=\"{'currmonth':d.cmo===CURR_MONTH&&!d.disabled, 'currday':d.currDay, 'selectedday':selectedDate.day===d.dateObj.day && selectedDate.month===d.dateObj.month && selectedDate.year===d.dateObj.year && d.cmo===CURR_MONTH, 'disabled': d.disabled, 'tablesingleday': d.cmo===CURR_MONTH&&!d.disabled}\" (click)=\"!d.disabled && cellClicked(d);$event.stopPropagation()\"><div [ngClass]=\"{'prevmonth':d.cmo===PREV_MONTH,'currmonth':d.cmo===CURR_MONTH,'nextmonth':d.cmo===NEXT_MONTH,'sunday':d.dayNbr === 0 && sunHighlight}\"><span [ngClass]=\"{'sundayDim': sunHighlight && d.dayNbr === 0 && (d.cmo===PREV_MONTH || d.cmo===NEXT_MONTH || d.disabled)}\">{{d.dateObj.day}}</span></div></td></tr></tbody></table></div></div>",
+            styles: [".mydp,.mydp .selector{background-color:#1b75bb}.mydp .nextmonth,.mydp .prevmonth,.mydp .sundayDim{opacity:.5}.mydp{min-width:100px;line-height:1.1;display:inline-block;position:relative;height:auto}.mydp *{padding:0;margin:0}.mydp .selector{margin-top:2px;margin-left:-1px;position:absolute;width:375px;padding:3px;z-index:100}.mydp .alignselectorright{right:-1px}.mydp .selectiongroup{position:relative;display:table;border:none}.mydp .selection{display:table-cell;position:absolute;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}.mydp .invaliddate,.mydp .invalidmonth,.mydp .invalidyear{background-color:#F1DEDE}.mydp ::-ms-clear{display:none}.mydp .selbtngroup{position:relative;vertical-align:middle;white-space:nowrap;width:1%;display:table-cell;text-align:right;font-size:0}.mydp .btnclear,.mydp .btnpicker{height:100%;width:30px;border:none;padding:0;cursor:pointer;outline:0;font:inherit;-moz-user-select:none}.mydp .header{width:100%;height:86px;margin-bottom:1px}.mydp .caltable td,.mydp .caltable th{cursor:pointer;height:44px}.mydp .header td{vertical-align:middle;border:none}.mydp .header td:nth-child(1){font-size:16px;padding-left:4px}.mydp .header td:nth-child(2){text-align:center}.mydp .header td:nth-child(3){font-size:16px;padding-right:4px}.mydp .caltable{table-layout:fixed;width:100%;font-size:14px}.mydp .caltable,.mydp .caltable td,.mydp .caltable th{border-collapse:collapse;color:#fff;line-height:1.1}.mydp .caltable td,.mydp .caltable th{padding:5px;text-align:center}.mydp .caltable th{font-size:13px;vertical-align:middle;font-weight:400}.mydp .caltable td div{height:41px;position:static}.mydp .caltable td div span.caption{position:relative;top:13px}.mydp .caltable td div div.has-events{background-color:#fff;position:relative;top:15px;left:19px;height:5px;width:5px}.mydp .inlinedp{position:relative}.mydp .disabled{cursor:default!important;color:#CCC!important}.mydp .currday div{border:1px solid #fff;border-radius:30px}.mydp .selectedday div{border:1px solid #1b75bb;border-radius:30px}.mydp .selectmenu{height:24px;width:60px}.mydp .headerbtn{cursor:pointer;width:29px}.mydp .headertodaybtn{padding:0 4px;cursor:pointer;font-size:11px;min-width:60px;height:22px}.mydp button::-moz-focus-inner{border:0}.mydp .btnclear:focus,.mydp .btnpicker:focus{background:#ADD8E6}.mydp .icon-calendar,.mydp .icon-cross{font-size:16px}.mydp table{display:table}.mydp table td{padding:0}.mydp .monthlabel,.mydp .yearlabel{cursor:pointer}.mydp .monthinput,.mydp .yearinput{width:40px;height:22px;text-align:center;outline:0}.mydp .headerbtn span:hover{width:31px}.mydp .monthlabel:hover,.mydp .yearlabel:hover{color:#8BDAF4;font-weight:700}@font-face{font-family:mydatepicker;src:url(data:application/x-font-ttf;charset=utf-8;base64,AAEAAAALAIAAAwAwT1MvMg8SAssAAAC8AAAAYGNtYXDMUczTAAABHAAAAGxnYXNwAAAAEAAAAYgAAAAIZ2x5ZmFQ1q4AAAGQAAABbGhlYWQGZuTFAAAC/AAAADZoaGVhB4IDyQAAAzQAAAAkaG10eBYAAnAAAANYAAAAIGxvY2EBdAE0AAADeAAAABJtYXhwABUAPgAAA4wAAAAgbmFtZQ5R9RkAAAOsAAABnnBvc3QAAwAAAAAFTAAAACAAAwOaAZAABQAAApkCzAAAAI8CmQLMAAAB6wAzAQkAAAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAAAAAAAABAAADmBwPA/8AAQAPAAEAAAAABAAAAAAAAAAAAAAAgAAAAAAADAAAAAwAAABwAAQADAAAAHAADAAEAAAAcAAQAUAAAABAAEAADAAAAAQAg5gDmAuYF5gf//f//AAAAAAAg5gDmAuYF5gf//f//AAH/4xoEGgMaARoAAAMAAQAAAAAAAAAAAAAAAAAAAAAAAQAB//8ADwABAAAAAAAAAAAAAgAANzkBAAAAAAEAAAAAAAAAAAACAAA3OQEAAAAAAQAAAAAAAAAAAAIAADc5AQAAAAAMAEAAAAPAA4AABAAJAA4AEwAYAB0AIgAnACwAMQA2ADsAABMRMxEjFyE1IRUDITUhFQERMxEjJRUzNSMTFTM1IzMVMzUjMxUzNSMBFTM1IzMVMzUjMxUzNSMTFTM1I0Bzc0ADAP0AQAOA/IADDXNz/ZOAgCCAgMCAgMCAgP6AgIDAgIDAgIAggIADAP1AAsBzc3P9c3NzAwD9QALAgMDA/sCAgICAgID/AICAgICAgAJAwMAAAAAAAgBwADADkANQAAQACQAANwEnARcDATcBB+kCp3n9WXl5Aqd5/Vl5MAKnef1ZeQKn/Vl5Aqd5AAABAOAAAAMgA4AAAwAAAQMBJQMgA/3DASADgPyAAcPfAAEA4AAAAyADgAADAAA3EwEF4AMCPf7gAAOA/j3fAAAAAQAAAAEAAF0/BsNfDzz1AAsEAAAAAADRxFAkAAAAANHEUCQAAAAAA8ADgAAAAAgAAgAAAAAAAAABAAADwP/AAAAEAAAAAAADwAABAAAAAAAAAAAAAAAAAAAACAQAAAAAAAAAAAAAAAIAAAAEAABABAAAcAQAAOAEAADgAAAAAAAKABQAHgB6AJYApgC2AAAAAQAAAAgAPAAMAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAA4ArgABAAAAAAABAAkAAAABAAAAAAACAAcAcgABAAAAAAADAAkAPAABAAAAAAAEAAkAhwABAAAAAAAFAAsAGwABAAAAAAAGAAkAVwABAAAAAAAKABoAogADAAEECQABABIACQADAAEECQACAA4AeQADAAEECQADABIARQADAAEECQAEABIAkAADAAEECQAFABYAJgADAAEECQAGABIAYAADAAEECQAKADQAvHZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAclZlcnNpb24gMS4wAFYAZQByAHMAaQBvAG4AIAAxAC4AMHZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAcnZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAclJlZ3VsYXIAUgBlAGcAdQBsAGEAcnZzZHBpY2tlcgB2AHMAZABwAGkAYwBrAGUAckZvbnQgZ2VuZXJhdGVkIGJ5IEljb01vb24uAEYAbwBuAHQAIABnAGUAbgBlAHIAYQB0AGUAZAAgAGIAeQAgAEkAYwBvAE0AbwBvAG4ALgAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=) format('truetype');font-weight:400;font-style:normal}.mydp .icon{font-family:mydatepicker;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.mydp .icon-calendar:before{content:\"\\e600\"}.mydp .icon-cross:before{content:\"\\e602\"}.mydp .icon-left:before{content:\"\\e605\"}.mydp .icon-right:before{content:\"\\e607\"}.header-cointainer{display:flex;justify-content:space-around;font-size:24px;color:#fff;font-weight:400}span.next:after,span.next:before,span.previous:after,span.previous:before{border:solid transparent;content:\" \";height:0;width:0;position:absolute;pointer-events:none}span.next:after{border-left-color:#1b75bb;border-width:8px;margin-top:5px}span.next:before{border-color:rgba(194,225,245,0);border-left-color:#fff;border-width:9px;margin-top:4px}span.previous:after{border-right-color:#1b75bb;border-width:11px;margin-top:2px}span.previous:before{border-color:rgba(194,225,245,0);border-right-color:#fff;border-width:9px;margin-top:4px}tr.selectedWeek td{background-color:#5D9CCB}tr.selectedWeek td:nth-child(1){border-top-left-radius:29px;border-bottom-left-radius:29px}tr.selectedWeek td:last-child{border-top-right-radius:29px;border-bottom-right-radius:29px}tr td div{border-radius:20px}"],
+            template: "<div class=\"mydp\" [ngStyle]=\"{'width': width, 'border': inline ? 'none' : '1px solid #AAA'}\"><div class=\"selectiongroup\" *ngIf=\"!inline\"><input type=\"text\" class=\"selection\" maxlength=\"10\" [ngClass]=\"{'invaliddate': invalidDate&&indicateInvalidDate}\" placeholder=\"{{showDateFormatPlaceholder?dateFormat:''}}\" [ngStyle]=\"{'height': height, 'line-height': height, 'font-size': selectionTxtFontSize, 'border': 'none', 'padding-right': selectionDayTxt.length>0 ? '60px' : '30px'}\" (keyup)=\"userDateInput($event)\" [value]=\"selectionDayTxt\"> <span class=\"selbtngroup\" [style.height]=\"height\"><button type=\"button\" class=\"btnclear\" *ngIf=\"selectionDayTxt.length>0\" (click)=\"removeBtnClicked()\"><span class=\"icon icon-cross\" [ngStyle]=\"{'line-height': height}\"></span></button> <button type=\"button\" class=\"btnpicker\" (click)=\"openBtnClicked()\"><span class=\"icon icon-calendar\" [ngStyle]=\"{'line-height': height}\"></span></button></span></div><div class=\"selector\" *ngIf=\"showSelector||inline\" [ngClass]=\"{'inlinedp': inline, 'alignselectorright': alignSelectorRight}\"><table class=\"header\"><tr><td><div class=\"header-cointainer\"><div class=\"headerbtn\" (click)=\"prevMonth()\"><span class=\"previous\"></span></div><div class=\"headermonthtxt\"><input type=\"text\" *ngIf=\"editMonth\" class=\"monthinput\" maxlength=\"4\" [inputFocus] [value]=\"visibleMonth.monthTxt\" (keyup)=\"userMonthInput($event)\" (click)=\"$event.stopPropagation()\" [ngClass]=\"{'invalidmonth': invalidMonth}\"> <span [ngClass]=\"{'monthlabel': editableMonthAndYear}\" *ngIf=\"!editMonth\" (click)=\"editMonthClicked($event)\">{{visibleMonth.monthTxt}} {{visibleMonth.year}}</span></div><div class=\"headerbtn\" (click)=\"nextMonth()\"><span class=\"next\"></span></div></div></td></tr></table><table class=\"caltable\"><thead><tr><th *ngFor=\"let d of weekDays\">{{d}}</th></tr></thead><tbody><tr *ngFor=\"let w of dates\" [class.selectedWeek]=\"selectedWeek.weekNumber === w.weekNumber\"><td *ngFor=\"let d of w.days\" [ngClass]=\"{'currmonth':d.cmo===CURR_MONTH&&!d.disabled, 'currday':d.currDay, 'selectedday':selectedDate.day===d.dateObj.day && selectedDate.month===d.dateObj.month && selectedDate.year===d.dateObj.year && d.cmo===CURR_MONTH, 'disabled': d.disabled, 'tablesingleday': d.cmo===CURR_MONTH&&!d.disabled}\" (click)=\"cellClicked(d);$event.stopPropagation()\"><div [ngClass]=\"{'prevmonth':d.cmo===PREV_MONTH,'currmonth':d.cmo===CURR_MONTH,'nextmonth':d.cmo===NEXT_MONTH,'sunday':d.dayNbr === 0 && sunHighlight}\"><span class=\"caption\" [ngClass]=\"{'sundayDim': sunHighlight && d.dayNbr === 0 && (d.cmo===PREV_MONTH || d.cmo===NEXT_MONTH || d.disabled)}\">{{d.dateObj.day}}</span><div class=\"has-events\" *ngIf=\"events[formatDate(d.dateObj)]\"></div></div></td></tr></tbody></table></div></div>",
             providers: [my_date_picker_locale_service_1.LocaleService, my_date_picker_validator_service_1.ValidatorService],
             encapsulation: core_1.ViewEncapsulation.None
         }), 

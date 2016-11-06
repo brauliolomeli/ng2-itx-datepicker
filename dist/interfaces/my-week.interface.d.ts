@@ -1,8 +1,7 @@
-import { IMyDate } from "./my-date.interface";
+import { IMyDay } from "./my-day.interface";
 export interface IMyWeek {
-    dateObj: IMyDate;
-    cmo: number;
-    currDay: boolean;
-    dayNbr: number;
-    disabled: boolean;
+    days: IMyDay[];
+    weekNumber: number;
+    start?: Date;
+    end?: Date;
 }

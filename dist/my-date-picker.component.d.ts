@@ -1,5 +1,5 @@
 import { EventEmitter, OnChanges, SimpleChanges, ElementRef, Renderer } from '@angular/core';
-import { IMyDate, IMyMonth, IMyDayLabels, IMyMonthLabels } from './interfaces/index';
+import { IMyDate, IMyWeek, IMyMonth, IMyDayLabels, IMyMonthLabels } from './interfaces/index';
 import { LocaleService } from './services/my-date-picker.locale.service';
 import { ValidatorService } from './services/my-date-picker.validator.service';
 export declare class MyDatePicker implements OnChanges {
@@ -11,13 +11,14 @@ export declare class MyDatePicker implements OnChanges {
     locale: string;
     defaultMonth: string;
     selDate: string;
+    events: any;
     dateChanged: EventEmitter<Object>;
     showSelector: boolean;
     visibleMonth: IMyMonth;
     selectedMonth: IMyMonth;
     selectedDate: IMyDate;
     weekDays: Array<string>;
-    dates: Array<Object>;
+    dates: IMyWeek[];
     selectionDayTxt: string;
     invalidDate: boolean;
     dayIdx: number;
@@ -48,6 +49,7 @@ export declare class MyDatePicker implements OnChanges {
     editableMonthAndYear: boolean;
     minYear: number;
     maxYear: number;
+    selectedWeek: IMyWeek;
     constructor(elem: ElementRef, renderer: Renderer, localeService: LocaleService, validatorService: ValidatorService);
     setLocaleOptions(): void;
     setOptions(): void;
@@ -82,4 +84,5 @@ export declare class MyDatePicker implements OnChanges {
     generateCalendar(m: number, y: number): void;
     parseSelectedDate(ds: string): IMyDate;
     parseSelectedMonth(ms: string): IMyMonth;
+    getWeekNumber(myDate: IMyDate): IMyWeek;
 }
