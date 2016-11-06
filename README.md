@@ -52,7 +52,7 @@ To install this component to an external project, follow the procedure:
             firstDayOfWeek: 'mo',
             sunHighlight: true,
             height: '34px',
-            width: '260px',
+            width: '375px',
             inline: false,
             disableUntil: {year: 2016, month: 8, day: 10},
             selectionTxtFontSize: '16px'
@@ -81,12 +81,12 @@ To install this component to an external project, follow the procedure:
             map: {
                 // Other components are here...
 
-                'mydatepicker': 'npm:mydatepicker',
+                'ng2-itx-datepicker': 'npm:ng2-itx-datepicker',
             },
             packages: {
                 // Other components are here...
 
-                mydatepicker: {
+                ng2-itx-datepicker: {
                     main: './index.js',
                     defaultExtension: 'js'
                 }
@@ -138,7 +138,7 @@ firstDayOfWeek and sunHighlight properties from the options.
 Provide the initially chosen date that will display both in the text input field
 and provide the default for the popped-up selector.
 
-## events attribute
+### events attribute
 
 List of days that will be marked in the calentar, the date must be specified using the same format than options.dateFormat.
    ```html
