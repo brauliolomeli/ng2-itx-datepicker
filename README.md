@@ -1,6 +1,9 @@
 # ng2-itx-datepicker
 
+
 **Angular 2 date picker - Angular2 reusable UI component based on [mydatepicker](https://github.com/kekeh/mydatepicker)**
+
+[![IMAGE ALT TEXT HERE](https://raw.githubusercontent.com/brauliolomeli/ng2-itx-datepicker/master/sampleapp/preview.png)]
 
 [![npm](https://img.shields.io/npm/v/mydatepicker.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/ng2-itx-datepicker)
 
