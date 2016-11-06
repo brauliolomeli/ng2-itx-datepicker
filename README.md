@@ -4,9 +4,6 @@
 
 [![npm](https://img.shields.io/npm/v/mydatepicker.svg?maxAge=2592000?style=flat-square)](https://www.npmjs.com/package/ng2-itx-datepicker)
 
-## Description
-Simple Angular2 date picker. Online demo is [here](http://brauliolomeli.github.io/ng2-itx-datepicker)
-
 ## Installation
 
 To install this component to an external project, follow the procedure:
@@ -158,9 +155,6 @@ Build dist folder (javascript version of the component):
 
 Execute unit tests and coverage (output is generated to the __test-output__ folder):
 * __npm test__
-
-## Demo
-Online demo is [here](http://brauliolomeli.github.io/ng2-itx-datepicker)
 
 ## Compatibility (tested with)
 * Firefox (latest)
