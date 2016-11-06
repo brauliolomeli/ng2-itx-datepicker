@@ -49,13 +49,11 @@ To install this component to an external project, follow the procedure:
         myDatePickerOptions = {
             todayBtnTxt: 'Today',
             dateFormat: 'yyyy-mm-dd',
-            firstDayOfWeek: 'mo',
+            firstDayOfWeek: 'su',
             sunHighlight: true,
             height: '34px',
             width: '375px',
-            inline: false,
-            disableUntil: {year: 2016, month: 8, day: 10},
-            selectionTxtFontSize: '16px'
+            inline: false
         };
     ```
 
