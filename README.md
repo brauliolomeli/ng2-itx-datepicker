@@ -53,7 +53,7 @@ To install this component to an external project, follow the procedure:
             sunHighlight: true,
             height: '34px',
             width: '375px',
-            inline: false
+            inline: true
         };
     ```
 
