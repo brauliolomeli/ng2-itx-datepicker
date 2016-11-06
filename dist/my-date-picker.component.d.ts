@@ -11,7 +11,7 @@ export declare class MyDatePicker implements OnChanges {
     locale: string;
     defaultMonth: string;
     selDate: string;
-    events: any;
+    events: string[];
     dateChanged: EventEmitter<Object>;
     showSelector: boolean;
     visibleMonth: IMyMonth;

@@ -38,6 +38,7 @@ To install this component to an external project, follow the procedure:
     * Optional attributes:
       * [selDate]="selectedDate" || [defaultMonth]="defaultMonth"
       * [locale]="locale"
+      * [events] = "['2016-11-15', ...dates]"
 
     * Example of the options data (not all properties listed):
     ```js
@@ -57,7 +58,12 @@ To install this component to an external project, follow the procedure:
     * Example of the date changed callback:
     ```js
         onDateChanged(event:any) {
-            console.log('onDateChanged(): ', event.date, ' - formatted: ', event.formatted, ' - epoc timestamp: ', event.epoc);
+            console.log('onDateChanged(): ', 
+                event.date,
+                ' - formatted: ', event.formatted,
+                ' - epoc timestamp: ', event.epoc,
+                ' - selected week start: ', event.start,
+                ' - selected week end: ', event.end);
         }
     ```
 
@@ -127,6 +133,15 @@ firstDayOfWeek and sunHighlight properties from the options.
 
 Provide the initially chosen date that will display both in the text input field
 and provide the default for the popped-up selector.
+
+## events attribute
+
+List of days that will be marked in the calentar, the date must be specified using the same format than options.dateFormat.
+   ```html
+   <my-date-picker [options]="myDatePickerOptions"
+                   (dateChanged)="onDateChanged($event)"
+                   [events] = "['2016-11-15', '2016-11-15']"></my-date-picker>
+   ```
 
 ### defaultMonth attribute
 

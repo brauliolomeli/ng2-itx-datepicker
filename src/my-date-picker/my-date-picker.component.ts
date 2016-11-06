@@ -22,10 +22,10 @@ export class MyDatePicker implements OnChanges {
     @Input() locale:string;
     @Input() defaultMonth:string;
     @Input() selDate:string;
-    @Input() events: any = {
-        '2016-11-15': [],
-        '2016-11-25': []
-    };
+    @Input() events: string[] = [
+        '2016-11-15',
+        '2016-11-25'
+    ];
     @Output() dateChanged:EventEmitter<Object> = new EventEmitter();
 
     showSelector: boolean = false;

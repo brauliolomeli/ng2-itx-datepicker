@@ -44,7 +44,7 @@
 						(click)="cellClicked(d);$event.stopPropagation()">
 						<div [ngClass]="{'prevmonth':d.cmo===PREV_MONTH,'currmonth':d.cmo===CURR_MONTH,'nextmonth':d.cmo===NEXT_MONTH,'sunday':d.dayNbr === 0 && sunHighlight}">
 							<span class="caption" [ngClass]="{'sundayDim': sunHighlight && d.dayNbr === 0 && (d.cmo===PREV_MONTH || d.cmo===NEXT_MONTH || d.disabled)}">{{d.dateObj.day}}</span>
-							<div class="has-events" *ngIf="events[formatDate(d.dateObj)]"></div>
+							<div class="has-events" *ngIf="events.indexOf(formatDate(d.dateObj)) >= 0"></div>
 						</div>
 					</td>
 				</tr>
